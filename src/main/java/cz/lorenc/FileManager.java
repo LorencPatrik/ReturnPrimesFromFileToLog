@@ -8,10 +8,13 @@ import java.io.IOException;
 import java.util.List;
 
 public class FileManager {
-    private final Logger logger;
+
+    private final Logger logConsole;
+    private final Logger logFile;
 
     public FileManager() {
-        this.logger = LogManager.getLogger(FileManager.class);
+        this.logFile = LogManager.getLogger("FileLogger");
+        this.logConsole = LogManager.getLogger("ConsoleLogger");
     }
 
     /**
@@ -25,14 +28,15 @@ public class FileManager {
     }
 
     /**
-     * writes a list of primes using the logger
+     * writes a list of primes to the console and to the file using the logger
      *
      * @param primes list of primes
      * @throws IOException if an error occurs during file reading or manipulation
      */
     public void createLogFile(List<Long> primes) throws IOException {
-        for (Long prime : primes) {
-            logger.info(prime);
-        }
+        for (int i = 0; i < primes.size(); i++) {
+            logConsole.info(primes.get(i));
+            logFile.info(i + 1 + ": " + primes.get(i) + ((i == primes.size() - 1) ? "\n" : ""));
+        }   // adds a blank line under the last number in the log file
     }
 }

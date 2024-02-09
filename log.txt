@@ -1,9 +1,15 @@
-5645657
-15619
-1234187
-211
-7
-9788677
-23311
-54881
-2147483647
+INFO  Aplikace pro práci s xlsx souborem, zadaným jako parametr. 
+
+INFO  1: 5645657
+INFO  2: 15619
+INFO  3: 1234187
+INFO  4: 211
+INFO  5: 7
+INFO  6: 9788677
+INFO  7: 23311
+INFO  8: 54881
+INFO  9: 2147483647
+
+INFO  Aplikace našla v souboru: vzorek_dat.xlsx 9x prvočíslo.
+
+INFO  Aplikace úspěšně skončla.

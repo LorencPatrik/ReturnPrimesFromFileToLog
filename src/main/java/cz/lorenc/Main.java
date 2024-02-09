@@ -1,89 +1,140 @@
 package cz.lorenc;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
 
 public class Main {
+
+    private static final FileManager fileManager = new FileManager();
+    private static final DataManager dataManager = new DataManager();
+    private static final Logger logFile = LogManager.getLogger("FileLogger");
+
     public static void main(String[] args) {
 
-        FileManager fileManager = new FileManager();
-        DataManager dataManager = new DataManager();
         int sheetNumber = 0;    // sheet number 1 (List1)
         int columnNumber = 1;   // column 2 (B)
-        int rowCount;
-        List<Long> primes;
-        XSSFWorkbook workBook;
-        XSSFSheet sheet;
 
-        System.out.println("Aplikace pro práci se souborem *.xlsx, zadaným jako parametr. \n");
+        logFile.info("Aplikace pro práci s xlsx souborem, zadaným jako parametr. \n");
 
-        // check if the address was entered as a parameter
-        if (args.length == 0) {
-            displayMessages("Nezadaná adresa *.xlsx souboru jako parametr aplikace...");
-            return;
-        }
+        File xlsxFile = getXlsxFile(args);
+        if (Objects.isNull(xlsxFile))
+            return;     // unavailable file...
 
-        // loads the *.xlsx file if it was found
-        String filePath = args[0];
-        File file = fileManager.getFile(filePath);
-        if (!file.exists()) {
-            displayMessages("Soubor na zadané adrese nenalezen: " + filePath);
-            return;
-        }
+        XSSFWorkbook workBook = getWorkBook(xlsxFile);
+        if (Objects.isNull(workBook))
+            return;     // unavailable Excel data...
 
-        // loads the Excel table from *.xlsx file if possible
-        try {
-            workBook = dataManager.readExcel(file);
-        } catch (Exception e) {
-            displayMessages("Data ze souboru nelze načíst...");
-            return;
-        }
+        List<Long> primes = processExcelData(workBook, sheetNumber, columnNumber);
+        if (Objects.isNull(primes) || primes.isEmpty())
+            return;     // empty Excel table or not containing numbers...
 
-        // reads the Excel table sheet and check if it isn't empty
-        sheet = workBook.getSheetAt(sheetNumber);
-        rowCount = sheet.getPhysicalNumberOfRows();
-        if (rowCount == 0) {
-            displayMessages("Tabulka je prázdná...");
-            closeWorkBook(workBook);
-            return;
-        }
+        if (!createOutputLog(primes, xlsxFile.getName()))
+            return;     // an error occurred while creating a logger file...
 
-        // reads the entire Excel table column and returns a list of primes, check if it isn't empty
-        primes = dataManager.getListOfPrimes(sheet, columnNumber);
-        if (primes.isEmpty()) {
-            displayMessages("Tabulka neobsahovala celá čísla...");
-            closeWorkBook(workBook);
-            return;
-        }
-
-        // creates an output log
-        try {
-            fileManager.createLogFile(primes);
-        } catch (IOException e) {
-            displayMessages("Nastala chyba při vytváření logovacího souboru...");
-        }
-        System.out.println("Aplikace našla v *.xlsx souboru celkem: " + primes.size() +
-                "x prvočíslo z celkového počtu položek: " + rowCount + "x\n");
-        System.out.println("Aplikace úspěšně skončla. Výsledek je ve složce aplikace v souboru log.txt");
+        logFile.info("Aplikace úspěšně skončla.");
     }
 
     // region: Private methods
 
-    static private void displayMessages(String message) {
-        System.out.println(message);
-        System.out.println("Aplikace ukončena");
+    /**
+     * check if the address was entered as a parameter and loads the *.xlsx file if it was found
+     *
+     * @param args xlsx file address specified as a parameter when the application is started
+     * @return xlsx file or null if not available
+     */
+    static private File getXlsxFile(String[] args) {
+        if (args.length == 0) {
+            sendLogToFile("Nezadaná adresa *.xlsx souboru jako parametr aplikace...");
+            return null;
+        }
+        File xlsxFile = fileManager.getFile(args[0]);
+        if (!xlsxFile.exists()) {
+            sendLogToFile("Soubor na zadané adrese nenalezen: " + args[0]);
+            return null;
+        }
+        return xlsxFile;
     }
+
+    /**
+     * loads the Excel table from *.xlsx file if possible
+     *
+     * @param xlsxFile file for processing
+     * @return workBook with Excel table or null if it cannot be read
+     */
+    static private XSSFWorkbook getWorkBook(File xlsxFile) {
+        XSSFWorkbook workBook = null;
+        try {
+            workBook = dataManager.readExcel(xlsxFile);
+        } catch (Exception e) {
+            sendLogToFile("Data ze souboru nelze načíst...");
+        }
+        return workBook;
+    }
+
+    /**
+     * reads the Excel table sheet and check if it isn't empty
+     * reads the entire Excel table column and returns a list of primes, check if it isn't empty
+     *
+     * @param workBook containing excel table
+     * @param sheetNumber table sheet number
+     * @param columnNumber sheet column number
+     * @return list of prime numbers or null if empty
+     */
+    static private List<Long> processExcelData(
+            XSSFWorkbook workBook, int sheetNumber, int columnNumber
+    ) {
+
+        XSSFSheet sheet = workBook.getSheetAt(sheetNumber);
+        if (sheet.getPhysicalNumberOfRows() == 0) {
+            sendLogToFile("Tabulka je prázdná...");
+            closeWorkBook(workBook);
+            return null;
+        }
+        List<Long> primes = dataManager.getListOfPrimes(sheet, columnNumber);
+        if (primes.isEmpty()) {
+            sendLogToFile("Tabulka neobsahovala celá čísla...");
+            closeWorkBook(workBook);
+        }
+        return primes;
+    }
+
+    /**
+     * creates an output log to file.txt and writes the result to the console
+     *
+     * @param primes list of prime numbers
+     * @return true if no error occurred
+     */
+    static private boolean createOutputLog(List<Long> primes, String fileName) {
+        try {
+            fileManager.createLogFile(primes);
+        } catch (IOException e) {
+            sendLogToFile("Nastala chyba při vytváření logovacího souboru...");
+            return false;
+        }
+        if (!primes.isEmpty())
+            logFile.info("Aplikace našla v souboru: " + fileName + " " + primes.size() + "x prvočíslo.\n");
+        return true;
+    }
+
+    static private void sendLogToFile(String message) {
+        logFile.warn(message);
+        logFile.warn("Aplikace předčasně ukončena!");
+    }
+
 
     static private void closeWorkBook(XSSFWorkbook workBook) {
         if (workBook != null) {
             try {
                 workBook.close();
             } catch (Exception e) {
-                System.out.println("Nepodařilo se ukončit workBook...");
+                logFile.warn("Nepodařilo se ukončit workBook...");
             }
         }
     }

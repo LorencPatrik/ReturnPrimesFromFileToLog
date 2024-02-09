@@ -20,11 +20,12 @@ import static org.junit.jupiter.api.Assertions.*;
 class DataManagerTest {
 
     private DataManager dataManager;
-    private int rowNumber = 0;
     static private XSSFWorkbook workbook;
     static private XSSFSheet sheet;
     static private XSSFRow row;
     static private XSSFCell cell;
+    private int rowNumber = 0;
+
 
     @BeforeAll
     static void setupBeforeAllTests() {
@@ -40,13 +41,16 @@ class DataManagerTest {
     }
 
     /**
-     * tests a method that verifies whether a given numbers is a prime number
+     * tests a methods that verifies whether a given numbers is a prime number
      */
     @Test
     void testIsPrimeForPrimeNumbers() {
         assertTrue(dataManager.isPrime(2));
         assertTrue(dataManager.isPrime(3));
         assertTrue(dataManager.isPrime(5));
+        assertTrue(dataManager.isPrimeJavaMath(2L));
+        assertTrue(dataManager.isPrimeJavaMath(3L));
+        assertTrue(dataManager.isPrimeJavaMath(5L));
     }
 
     @Test
@@ -54,12 +58,17 @@ class DataManagerTest {
         assertFalse(dataManager.isPrime(1));
         assertFalse(dataManager.isPrime(6));
         assertFalse(dataManager.isPrime(10));
+        assertFalse(dataManager.isPrimeJavaMath(1L));
+        assertFalse(dataManager.isPrimeJavaMath(6L));
+        assertFalse(dataManager.isPrimeJavaMath(10L));
     }
 
     @Test
     void testIsPrimeForOthersNumbers() {
         assertFalse(dataManager.isPrime(0));
-        assertFalse(dataManager.isPrime(-1));
+        assertFalse(dataManager.isPrime(-7));
+        assertFalse(dataManager.isPrimeJavaMath(0L));
+        assertFalse(dataManager.isPrimeJavaMath(-7L));
     }
 
     /**
@@ -79,6 +88,10 @@ class DataManagerTest {
 
         // a null value is expected (Cell Type: NUMERIC)
         cell.setCellValue(51.2);
+        assertNull(dataManager.getCellValue(cell));
+        cell.setCellValue(Double.MAX_VALUE);
+        assertNull(dataManager.getCellValue(cell));
+        cell.setCellValue(Double.MIN_VALUE);
         assertNull(dataManager.getCellValue(cell));
 
         // an integer value is expected (Cell Type: STRING)
@@ -107,6 +120,10 @@ class DataManagerTest {
         assertNull(dataManager.getCellValue(cell));
         cell.setCellValue(" ");
         assertNull(dataManager.getCellValue(cell));
+        cell.setCellValue(Double.MIN_VALUE);
+        assertNull(dataManager.getCellValue(cell));
+        cell.setCellValue(Double.MAX_VALUE);
+        assertNull(dataManager.getCellValue(cell));
 
         // an unexpected types...
         cell.setCellType(CellType.BLANK);
@@ -125,7 +142,9 @@ class DataManagerTest {
         ArrayList<String> testStrings = new ArrayList<>(
                 Arrays.asList("Data", "", " ", "2,5", "5.2", " 7", "20 ", "11", "x")
         );
-        ArrayList<Double> testNumbers = new ArrayList<>(Arrays.asList(-7.0, 0.0, 1.0, 2.0, 17.0, 13.3));
+        ArrayList<Double> testNumbers = new ArrayList<>(
+                Arrays.asList(-7.0, 0.0, 1.0, 2.0, 17.0, 13.3, Double.MAX_VALUE, Double.MIN_VALUE)
+        );
         List<Long> correctNumbers = new ArrayList<>(Arrays.asList(7L, 11L, 2L, 17L));
 
         CellType typeString = CellType.STRING;
