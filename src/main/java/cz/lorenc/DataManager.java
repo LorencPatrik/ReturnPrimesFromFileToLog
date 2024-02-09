@@ -108,7 +108,7 @@ public class DataManager {
                 double numberD = cell.getNumericCellValue();
                 if (numberD > Long.MAX_VALUE || numberD < Long.MIN_VALUE)
                     yield null;
-                Long numberL = (long) numberD;
+                long numberL = (long) numberD;
                 if (numberD != numberL)
                     yield null;                 // it was a decimal number...
                 yield numberL;
