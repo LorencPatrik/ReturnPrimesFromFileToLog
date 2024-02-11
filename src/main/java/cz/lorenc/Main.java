@@ -118,8 +118,7 @@ public class Main {
             sendLogToFile("Nastala chyba při vytváření logovacího souboru...");
             return false;
         }
-        if (!primes.isEmpty())
-            logFile.info("Aplikace našla v souboru: " + fileName + " " + primes.size() + "x prvočíslo.\n");
+        logFile.info("Aplikace našla v souboru: " + fileName + " " + primes.size() + "x prvočíslo.");
         return true;
     }
 

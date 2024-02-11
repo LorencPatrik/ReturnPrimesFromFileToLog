@@ -32,7 +32,13 @@ public class DataManager {
      */
     public XSSFWorkbook readExcel(File file) throws IOException {
         FileInputStream fileInputStream = new FileInputStream(file);
-        return new XSSFWorkbook(fileInputStream);
+        XSSFWorkbook workBook =  new XSSFWorkbook(fileInputStream);
+        try {
+            fileInputStream.close();
+        } catch (IOException e) {
+            logFile.warn("Nepodařilo se uzavřít fileInputStream...");
+        }
+        return workBook;
     }
 
     /**
@@ -46,20 +52,21 @@ public class DataManager {
         List<Long> numbers = new ArrayList<>();
         int countNullCells = 0;
         for (int i = 0; i <= sheet.getLastRowNum(); i++) {
-            XSSFRow row = sheet.getRow(i);
+            XSSFRow row;
             XSSFCell cell;
             try {
+                row = sheet.getRow(i);
                 cell = row.getCell(columnNumber);
             } catch (Exception e) {
                 countNullCells++;
-                continue;   // when the cell contains a null silently continues the next iteration...
+                continue;   // when the row or the cell contains a null silently continues the next iteration...
             }
             Long number = getCellValue(cell);
             if (number != null && isPrimeJavaMath(number))  // you can try this less efficient method: isPrime(number)
                 numbers.add(number);
         }
         if (countNullCells > 0)
-            logFile.warn("Sloupec tabulky obsahoval: " + countNullCells + "x nezadanou hodnotu.");
+            logFile.warn("Sloupec tabulky obsahoval: " + countNullCells + "x nezadanou hodnotu.\n");
         return numbers;
     }
 

@@ -11,5 +11,4 @@ INFO  8: 54881
 INFO  9: 2147483647
 
 INFO  Aplikace našla v souboru: vzorek_dat.xlsx 9x prvočíslo.
-
 INFO  Aplikace úspěšně skončla.
